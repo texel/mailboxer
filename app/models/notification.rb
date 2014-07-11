@@ -5,6 +5,7 @@ class Notification < ActiveRecord::Base
   belongs_to :sender, :polymorphic => :true
   belongs_to :notified_object, :polymorphic => :true
   has_many :receipts, :dependent => :destroy
+  has_many :unread_receipts, -> { where(:is_read => false) }, :class_name => 'Receipt', :foreign_key => 'notification_id'
 
   validates_presence_of :subject, :body
 

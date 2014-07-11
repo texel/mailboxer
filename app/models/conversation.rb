@@ -3,6 +3,8 @@ class Conversation < ActiveRecord::Base
 
   has_many :messages, :dependent => :destroy
   has_many :receipts, :through => :messages
+  has_many :unread_receipts, :through => :messages
+  has_many :receivers, :through => :receipts
 
   validates_presence_of :subject
 
@@ -10,7 +12,7 @@ class Conversation < ActiveRecord::Base
 
   scope :participant, lambda {|participant|
     select('DISTINCT conversations.*').
-      where('notifications.type'=> Message.name).
+      where('notifications.type' => Message.name).
       order("conversations.updated_at DESC").
       joins(:receipts).merge(Receipt.recipient(participant))
   }
@@ -78,7 +80,7 @@ class Conversation < ActiveRecord::Base
 
   #Returns an array of participants
   def participants
-    recipients
+    receivers
   end
 
   #Originator of the conversation.
@@ -103,7 +105,7 @@ class Conversation < ActiveRecord::Base
 
   #Returns the receipts of the conversation for one participants
   def receipts_for(participant)
-    Receipt.conversation(self).recipient(participant)
+    receipts.recipient(participant)
   end
 
   #Returns the number of messages of the conversation

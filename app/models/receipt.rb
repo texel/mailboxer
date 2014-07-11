@@ -2,13 +2,15 @@ class Receipt < ActiveRecord::Base
   attr_accessible :trashed, :is_read, :deleted if Mailboxer.protected_attributes?
 
   belongs_to :notification, :validate => true, :autosave => true
-  belongs_to :receiver, :polymorphic => :true
+  belongs_to :receiver, :class_name => 'User'
   belongs_to :message, :foreign_key => "notification_id"
+
+  delegate :conversation, to: 'notification'
 
   validates_presence_of :receiver
 
   scope :recipient, lambda { |recipient|
-    where(:receiver_id => recipient.id,:receiver_type => recipient.class.base_class.to_s)
+    where(:receiver_id => recipient.id)
   }
   #Notifications Scope checks type to be nil, not Notification because of STI behaviour
   #with the primary class (no type is saved)
@@ -28,6 +30,7 @@ class Receipt < ActiveRecord::Base
   scope :not_deleted, lambda { where(:deleted => false) }
   scope :is_read, lambda { where(:is_read => true) }
   scope :is_unread, lambda { where(:is_read => false) }
+  scope :unread, -> { is_unread } # Because seriously.
 
   after_validation :remove_duplicate_errors
   class << self
@@ -74,20 +77,10 @@ class Receipt < ActiveRecord::Base
     #This methods helps to do a update_all with table joins, not currently supported by rails.
     #Acording to the github ticket https://github.com/rails/rails/issues/522 it should be
     #supported with 3.2.
-    def update_receipts(updates,options={})
-      ids = Array.new
-      where(options).each do |rcp|
-        ids << rcp.id
-      end
-      unless ids.empty?
-        conditions = [""].concat(ids)
-        condition = "id = ? "
-        ids.drop(1).each do
-          condition << "OR id = ? "
-        end
-        conditions[0] = condition
-        Receipt.except(:where).except(:joins).where(conditions).update_all(updates)
-      end
+    def update_receipts(updates, options={})
+      raise "Options unsupported" if options.present?
+
+      update_all(updates)
     end
   end
 
