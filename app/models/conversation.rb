@@ -2,6 +2,7 @@ class Conversation < ActiveRecord::Base
   attr_accessible :subject if Mailboxer.protected_attributes?
 
   has_many :messages, :dependent => :destroy
+  has_one  :last_message, -> { order('created_at DESC') }, :class_name => 'Message'
   has_many :receipts, :through => :messages
   has_many :unread_receipts, :through => :messages
   has_many :receivers, :through => :receipts
@@ -96,11 +97,6 @@ class Conversation < ActiveRecord::Base
   #Sender of the last message.
   def last_sender
     @last_sender ||= self.last_message.sender
-  end
-
-  #Last message in the conversation.
-  def last_message
-    @last_message ||= self.messages.order('created_at DESC').first
   end
 
   #Returns the receipts of the conversation for one participants
