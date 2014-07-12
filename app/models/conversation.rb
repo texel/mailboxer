@@ -33,6 +33,10 @@ class Conversation < ActiveRecord::Base
     participant(participant).merge(Receipt.not_trash)
   }
 
+  def user_unread_receipts
+    @user_unread_receipts ||= []
+  end
+
   #Mark the conversation as read for one of the participants
   def mark_as_read(participant)
     return if participant.nil?
