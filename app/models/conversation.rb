@@ -5,7 +5,7 @@ class Conversation < ActiveRecord::Base
   has_one  :last_message, -> { order('created_at DESC') }, :class_name => 'Message'
   has_many :receipts, :through => :messages
   has_many :unread_receipts, :through => :messages
-  has_many :receivers, :through => :receipts
+  has_many :receivers, -> { uniq }, :through => :last_message
 
   validates_presence_of :subject
 
